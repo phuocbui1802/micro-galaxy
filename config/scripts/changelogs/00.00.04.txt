@@ -1,0 +1,2 @@
+180403
+- Alter table import, add column options.

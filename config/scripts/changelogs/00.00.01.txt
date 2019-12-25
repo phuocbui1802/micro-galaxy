@@ -1,0 +1,4 @@
+180323
+- add is_blacklist to table file.
+- Add total_count, file_id, comment and FK file_id to table file. To table blacklist_imports
+- change birthday on email table to datetime;	

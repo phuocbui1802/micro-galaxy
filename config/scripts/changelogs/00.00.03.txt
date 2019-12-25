@@ -1,0 +1,3 @@
+180402
+- Alter table blacklisted_emails, add column is_domain.
+- Alter table import add blacklist_count

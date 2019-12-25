@@ -1,0 +1,2 @@
+180328
+- Drop column ID on email_import table

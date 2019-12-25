@@ -1,0 +1,2 @@
+180503
+- Alter table email, add 'subscribed' tinyint field

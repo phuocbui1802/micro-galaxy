@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+    mysql:
+        image: mysql:5.7
+        restart: always
+        ports:
+            - '3308:3306'
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: galaxy
+            MYSQL_USER: root
+            MYSQL_PASSWORD: root
+
+    rabbitmq:
+        image: rabbitmq:3.7.15-management
+
+    nats:
+        image: nats
+
+    node:
+        build:
+            context: .
+        container_name: micro-galaxy-node
+        restart: always
+        ports:
+            - '3000:3000'
+            - '3001:3001'
+            - '8000:8000'
+        tty: true
+        depends_on:
+            - mysql
+            - rabbitmq
+            - nats
+        volumes:
+            - ./:/usr/src/galaxy

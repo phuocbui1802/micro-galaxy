@@ -1,0 +1,2 @@
+180611
+- Add table to store blacklist data
