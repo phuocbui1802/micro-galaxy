@@ -3,10 +3,10 @@
 const axios = require('axios');
 const moment = require('moment');
 
-const mailingSystemAccountService = require('../../mixins/mailing_system_account.service.js');
+const externalSystemAccountService = require('../../mixins/external_system_account.service.js');
 const formattingService = require('../../mixins/formatting.service.js');
 
-const { SYSTEMS, USER_IMPORT_STATUS, GENDER } = require('../../utils/constants.js');
+const { SYSTEMS, USER_IMPORT_STATUS, GENDER, CLIENT_MESSAGE } = require('../../utils/constants.js');
 
 const ENDPOINTS = {
   GET_SESSION_ID: '/brmapi/login',
@@ -27,7 +27,7 @@ const STATUS = {
 
 module.exports = {
   name: 'gateway_beyond',
-  mixins: [mailingSystemAccountService, formattingService],
+  mixins: [externalSystemAccountService, formattingService],
 
   /**
    * Service settings
@@ -118,6 +118,10 @@ module.exports = {
       return {
         message: STATUS.OK
       };
+    },
+
+    handleGetSendout (ctx) {
+      return this.getReportByID(ctx.params.id);
     }
   },
 
@@ -131,7 +135,7 @@ module.exports = {
    */
   methods: {
     async getSessionIDUsingSecretKey (user, secret) {
-      const url = `${process.env.BEYOND_BASE_URL}${ENDPOINTS.GET_SESSION_ID}`;
+      const url = `${process.env.BEYOND_HOST}${ENDPOINTS.GET_SESSION_ID}`;
       const requestConfig = {
         method: 'post',
         url: url,
@@ -145,14 +149,14 @@ module.exports = {
     },
 
     async getValidBeyondCredential (unit) {
-      const accounts = await this.getMailingSystemAccount(SYSTEMS.BEYOND, unit);
+      const accounts = await this.getExternalSystemAccount(SYSTEMS.BEYOND, unit);
 
       return this.getSessionIDUsingSecretKey(accounts[0].client_id, accounts[0].client_secret);
     },
 
     async getReport (fromDate, toDate, unit) {
       this.logger.info('Getting new report for Beyond');
-      const url = `${process.env.BEYOND_BASE_URL}${ENDPOINTS.GET_REPORT}`;
+      const url = `${process.env.BEYOND_HOST}${ENDPOINTS.GET_REPORT}`;
       const sessionId = await this.getValidBeyondCredential(unit);
 
       return axios({
@@ -170,7 +174,7 @@ module.exports = {
       return axios({
         method: 'post',
         headers: { 'content-type': 'application/json' },
-        url: `${process.env.BEYOND_BASE_URL}${ENDPOINTS.GET_MESSAGE}`,
+        url: `${process.env.BEYOND_HOST}${ENDPOINTS.GET_MESSAGE}`,
         data: {
           session_id: sessionId,
           message_id: messageId
@@ -182,7 +186,7 @@ module.exports = {
       return axios({
         method: 'post',
         headers: { 'content-type': 'application/json' },
-        url: `${process.env.BEYOND_BASE_URL}${ENDPOINTS.GET_CAMPAIGN}`,
+        url: `${process.env.BEYOND_HOST}${ENDPOINTS.GET_CAMPAIGN}`,
         data: {
           session_id: sessionId,
           campaign_id: campaignId
@@ -190,10 +194,46 @@ module.exports = {
       });
     },
 
+    getReportByID (id) {
+      const fullReturnData = Object.assign({}, CLIENT_MESSAGE.SENDOUT_OK_RESPONSE);
+      fullReturnData.system = SYSTEMS.BEYOND;
+      fullReturnData.id = id;
+      fullReturnData.total = 1;
+      this.logger.info('Getting new report for Beyond');
+      const url = `${process.env.BEYOND_HOST}${ENDPOINTS.GET_REPORT}`;
+      const requestConfig = {
+        method: 'post',
+        url: url
+      };
+      let requestData;
+      return this.getValidBeyondCredential()
+        .then(beyondCredential => {
+          requestData = {
+            session_id: beyondCredential.session_id,
+            campagne_id: id
+          };
+          requestConfig.data = requestData;
+          return axios(requestConfig).then(
+            response => {
+              const returnData = response.data.reports;
+              if (returnData.length === 0) {
+                fullReturnData.total = 0;
+                fullReturnData.reports = [{
+                  client_message: CLIENT_MESSAGE.SENDOUT_NOT_EXSIST
+                }];
+              } else {
+                fullReturnData.reports = returnData;
+              }
+              return fullReturnData;
+            }
+          );
+        });
+    },
+
     async addEmailToBlacklist (email) {
-      const url = `${process.env.BEYOND_BASE_URL}${ENDPOINTS.ADD_BLACKLIST}`;
+      const url = `${process.env.BEYOND_HOST}${ENDPOINTS.ADD_BLACKLIST}`;
       const errors = [];
-      const accounts = await this.getMailingSystemAccount(SYSTEMS.BEYOND);
+      const accounts = await this.getExternalSystemAccount(SYSTEMS.BEYOND);
 
       for (const account of accounts) {
         this.logger.info(`Adding: ${email} to beyond ${account.unit}`);
@@ -220,7 +260,7 @@ module.exports = {
 
     async getUserByEmail (email, unit) {
       this.logger.info('Getting: ', email, ' from beyond');
-      const url = `${process.env.BEYOND_BASE_URL}${ENDPOINTS.GET_USER}`;
+      const url = `${process.env.BEYOND_HOST}${ENDPOINTS.GET_USER}`;
       const sessionId = await this.getValidBeyondCredential(unit);
 
       return axios({
@@ -265,7 +305,7 @@ module.exports = {
     async checkUserExists (listId, email, sessionId) {
       const response = await axios({
         method: 'POST',
-        url: `${process.env.BEYOND_BASE_URL}${ENDPOINTS.GET_USER}`,
+        url: `${process.env.BEYOND_HOST}${ENDPOINTS.GET_USER}`,
         data: {
           session_id: sessionId,
           emails: [email],
@@ -277,7 +317,7 @@ module.exports = {
     },
 
     async addEmailToList (listId, body, unit) {
-      const url = `${process.env.BEYOND_BASE_URL}${ENDPOINTS.ADD_SINGLE_EMAIL}`;
+      const url = `${process.env.BEYOND_HOST}${ENDPOINTS.ADD_SINGLE_EMAIL}`;
       const sessionId = await this.getValidBeyondCredential(unit);
 
       const userExists = await this.checkUserExists(listId, body.email, sessionId);
@@ -309,11 +349,11 @@ module.exports = {
 
     async unsubscribeEmail (email, unit) {
       const sessionId = await this.getValidBeyondCredential(unit);
-      const url = `${process.env.BEYOND_BASE_URL}${ENDPOINTS.ADD_SINGLE_EMAIL}`;
+      const url = `${process.env.BEYOND_HOST}${ENDPOINTS.ADD_SINGLE_EMAIL}`;
 
       const { data } = await axios({
         method: 'POST',
-        url: `${process.env.BEYOND_BASE_URL}${ENDPOINTS.GET_DATASOURCE}`,
+        url: `${process.env.BEYOND_HOST}${ENDPOINTS.GET_DATASOURCE}`,
         data: {
           session_id: sessionId
         }

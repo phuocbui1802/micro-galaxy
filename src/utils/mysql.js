@@ -34,5 +34,5 @@ module.exports.runQuery = (query, values) => {
 };
 
 module.exports.TABLE_NAME = {
-  MAILING_SYSTEM_ACCOUNT: 'mailing_system_account'
+  EXTERNAL_SYSTEM_ACCOUNT: 'external_system_account'
 };

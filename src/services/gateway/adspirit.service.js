@@ -6,6 +6,9 @@ const parse = require('csv-parse/lib/sync');
 const moment = require('moment');
 const shortID = require('shortid');
 
+const externalSystemAccountService = require('../../mixins/external_system_account.service.js');
+const { SYSTEMS } = require('../../utils/constants.js');
+
 const ENDPOINTS = {
   LOGIN: '/control/index_home.php',
   ACCEPTED_CONVERSIONS: '/control/stat_track_protokoll.php',
@@ -32,6 +35,7 @@ const cookiejar = rp.jar();
 
 module.exports = {
   name: 'gateway_adspirit',
+  mixins: [externalSystemAccountService],
 
   /**
    * Service settings
@@ -98,12 +102,14 @@ module.exports = {
   methods: {
 
     async login () {
+      const accounts = await this.getExternalSystemAccount(SYSTEMS.ADSPIRIT);
+
       const $ = await rp({
         method: 'POST',
-        uri: process.env.ADSPIRIT_BASE_URL + ENDPOINTS.LOGIN,
+        uri: process.env.ADSPIRIT_HOST + ENDPOINTS.LOGIN,
         form: {
-          kname: process.env.ADSPIRIT_USERNAME,
-          kpass: process.env.ADSPIRIT_PASSWORD,
+          kname: accounts[0].username,
+          kpass: accounts[0].password,
           s: 'Login'
         },
         jar: cookiejar,
@@ -127,7 +133,7 @@ module.exports = {
       await this.login();
       const csv = await rp({
         method: 'POST',
-        uri: process.env.ADSPIRIT_BASE_URL + endpoint,
+        uri: process.env.ADSPIRIT_HOST + endpoint,
         form: {
           aid_search: '',
           aid: ID_ALL,
@@ -175,7 +181,7 @@ module.exports = {
     async createTrackingAction (name, value, revenue, postClick, postView, validation) {
       const $ = await rp({
         method: 'POST',
-        uri: process.env.ADSPIRIT_BASE_URL + ENDPOINTS.CREATE_CONVERSION_EVENT,
+        uri: process.env.ADSPIRIT_HOST + ENDPOINTS.CREATE_CONVERSION_EVENT,
         form: {
           backfile: '',
           intID: -1,
@@ -249,7 +255,7 @@ module.exports = {
       await this.login();
       const $ = await rp({
         method: 'POST',
-        uri: process.env.ADSPIRIT_BASE_URL + ENDPOINTS.TRACKING_SWITCHER,
+        uri: process.env.ADSPIRIT_HOST + ENDPOINTS.TRACKING_SWITCHER,
         form: {
           backfile: '',
           intID: -1,
@@ -280,7 +286,7 @@ module.exports = {
       await this.login();
       const $ = await rp({
         method: 'POST',
-        uri: process.env.ADSPIRIT_BASE_URL + ENDPOINTS.TRACKING_CODE,
+        uri: process.env.ADSPIRIT_HOST + ENDPOINTS.TRACKING_CODE,
         form: {
           backfile: '',
           intID: -1,
@@ -336,7 +342,7 @@ module.exports = {
       await this.login();
       const $ = await rp({
         method: 'POST',
-        uri: process.env.ADSPIRIT_BASE_URL + ENDPOINTS.CREATE_CREATIVE,
+        uri: process.env.ADSPIRIT_HOST + ENDPOINTS.CREATE_CREATIVE,
         form: {
           backfile: '',
           intID: ID_ALL,
@@ -546,7 +552,7 @@ module.exports = {
       };
     },
 
-    urlIstHttps: url => {
+    urlIstHttps (url) {
       return url.indexOf('https') !== -1;
     },
 

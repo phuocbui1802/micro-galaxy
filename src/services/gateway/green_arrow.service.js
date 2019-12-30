@@ -2,7 +2,10 @@
 
 const axios = require('axios');
 const moment = require('moment');
-const { USER_IMPORT_STATUS } = require('../../utils/constants.js');
+
+const externalSystemAccountService = require('../../mixins/external_system_account.service.js');
+const { USER_IMPORT_STATUS, SYSTEMS } = require('../../utils/constants.js');
+
 const END_POINTS = {
   ADD_USER: 'v2/mailing_lists/:list_id:/subscribers',
   SINGLE_USER: 'v2/mailing_lists/:list_id:/subscribers/:id:',
@@ -20,30 +23,26 @@ const USER_STATUSES = {
 };
 
 const axiosInstance = axios.create({
-  baseURL: process.env.GREEN_ARROW_BASE_URL,
-  headers: {
-    Authorization: `Basic ${process.env.GREEN_ARROW_TOKEN}`
-  }
+  baseURL: process.env.GREEN_ARROW_HOST
 });
 
 module.exports = {
   name: 'gateway_green_arrow',
+  mixins: [externalSystemAccountService],
 
   /**
-  * Service settings
-  */
-  settings: {
-
-  },
+   * Service settings
+   */
+  settings: {},
 
   /**
-  * Service dependencies
-  */
+   * Service dependencies
+   */
   dependencies: [],
 
   /**
-  * Actions
-  */
+   * Actions
+   */
   actions: {
 
     async handleAddEmailToList (ctx) {
@@ -113,15 +112,13 @@ module.exports = {
   },
 
   /**
-  * Events
-  */
-  events: {
-
-  },
+   * Events
+   */
+  events: {},
 
   /**
-  * Methods
-  */
+   * Methods
+   */
   methods: {
     createEmailObject (email) {
       return {
@@ -170,7 +167,11 @@ module.exports = {
     async getUserId (listId, email) {
       const url = END_POINTS.SINGLE_USER.replace(':list_id:', listId).replace(':id:', email);
 
-      const response = await axiosInstance.get(url);
+      const response = await axiosInstance({
+        method: 'GET',
+        headers: await this.getDefaultHeader(),
+        url
+      });
 
       return response.data.data ? response.data.data[0].id : null;
     },
@@ -180,6 +181,7 @@ module.exports = {
       const response = await axiosInstance({
         method: 'POST',
         url,
+        headers: await this.getDefaultHeader(),
         data: user
       });
 
@@ -193,6 +195,7 @@ module.exports = {
       const response = await axiosInstance({
         method: 'PUT',
         url,
+        headers: await this.getDefaultHeader(),
         data: user
       });
 
@@ -204,7 +207,11 @@ module.exports = {
     },
 
     async getListMailings () {
-      const { data: mailingsRes } = await axiosInstance.get(END_POINTS.GET_LIST_MAILINGS);
+      const { data: mailingsRes } = await axiosInstance({
+        method: 'GET',
+        headers: await this.getDefaultHeader(),
+        url: END_POINTS.GET_LIST_MAILINGS
+      });
       if (!mailingsRes.success) {
         throw new Error(mailingsRes.error_message);
       }
@@ -223,7 +230,13 @@ module.exports = {
         params.started_at__end = to;
       }
       const url = END_POINTS.GET_LIST_CAMPAIGNS.replace('{mailingId}', mailingId);
-      const { data: results } = await axiosInstance.get(url, { params });
+      const { data: results } = await axiosInstance.get(
+        url,
+        {
+          params,
+          headers: await this.getDefaultHeader()
+        }
+      );
       if (!results.success) {
         throw new Error(results.error_message);
       }
@@ -235,7 +248,11 @@ module.exports = {
         throw new Error('CampaignId can not be null');
       }
       const url = END_POINTS.GET_SINGLE_CAMPAIGN.replace('{campaignId}', campaignId);
-      const { data: campaignRes } = await axiosInstance.get(url);
+      const { data: campaignRes } = await axiosInstance({
+        method: 'GET',
+        headers: await this.getDefaultHeader(),
+        url
+      });
       if (!campaignRes.success) {
         throw new Error(campaignRes.error_message);
       }
@@ -246,7 +263,8 @@ module.exports = {
       const url = END_POINTS.GET_USERS_BY_EMAIL.replace(':email:', email);
       const response = await axiosInstance({
         method: 'GET',
-        url
+        url,
+        headers: await this.getDefaultHeader()
       });
 
       if (!response.data.success) {
@@ -275,6 +293,7 @@ module.exports = {
       const response = await axiosInstance({
         method: 'POST',
         url,
+        headers: await this.getDefaultHeader(),
         data: {
           data: [email]
         }
@@ -283,26 +302,34 @@ module.exports = {
       if (!response.data.success) {
         throw new Error(response.data.error_message);
       }
+    },
+
+    async getDefaultHeader () {
+      const accounts = await this.getExternalSystemAccount(SYSTEMS.GREEN_ARROW);
+
+      return {
+        Authorization: `Basic ${accounts[0].token}`
+      };
     }
   },
 
   /**
-  * Service created lifecycle event handler
-  */
+   * Service created lifecycle event handler
+   */
   created () {
 
   },
 
   /**
-  * Service started lifecycle event handler
-  */
+   * Service started lifecycle event handler
+   */
   started () {
 
   },
 
   /**
-  * Service stopped lifecycle event handler
-  */
+   * Service stopped lifecycle event handler
+   */
   stopped () {
 
   }

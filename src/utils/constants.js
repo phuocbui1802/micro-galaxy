@@ -69,7 +69,14 @@ const CONST_CONFIG = {
     SENDE: 'sende',
     SENDE_EP: 'sendeep',
     INXMAIL9: 'inxmail9',
-    INXMAIL10: 'inxmail10'
+    INXMAIL10: 'inxmail10',
+    GREEN_ARROW: 'greenarrow',
+
+    ADSPIRIT: 'adspirit',
+    CONTASIMPLE: 'contasimple',
+    EASY: 'easy',
+    MAILX: 'mailx',
+    XERO: 'xero'
   },
   CLIENT_MESSAGE: {
     SENDOUT_NOT_EXSIST: 'sendout not exist',
@@ -83,7 +90,50 @@ const CONST_CONFIG = {
   },
   MAILING_SYSTEM_ACCOUNT_TYPES: {
     USER_AND_PASS: 1,
-    OAUTH: 2
+    OAUTH: 2,
+    TOKEN_ONLY: 3
+  },
+  SENDE: {
+    token: '8211cc13e49928b7d45c99030583bd6771162928',
+    username: 'Evania',
+    url: 'https://sf27.sendsfx.com/xml.php',
+    ID_MAPPING: {
+      first_name: 2,
+      last_name: 8,
+      gender: 1,
+      city: 9,
+      country: 13,
+      zip: 6,
+      city_ip: 10,
+      country_ip: 14,
+      region_ip: 300,
+      zip_ip: 11,
+      dob: 3,
+      region: 12,
+      supplier: 18,
+      md5: 51,
+      galaxy_id: 299
+    }
+  },
+  SENDE_EP: {
+    url: 'https://sf27.sendsfx.com/xml.php',
+    ID_MAPPING: {
+      first_name: 260,
+      last_name: 261,
+      gender: 262,
+      city: 266,
+      country: 267,
+      zip: 265,
+      city_ip: 281,
+      country_ip: 282,
+      region_ip: 301,
+      zip_ip: 280,
+      dob: 263,
+      region: 270,
+      supplier: 278,
+      md5: 297,
+      galaxy_id: 298
+    }
   }
 };
 

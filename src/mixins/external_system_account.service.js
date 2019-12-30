@@ -6,10 +6,10 @@ module.exports = {
    * Methods
    */
   methods: {
-    getMailingSystemAccount (mailingSystemId, unit = null) {
-      const values = [mailingSystemId];
+    getExternalSystemAccount (systemId, unit = null) {
+      const values = [systemId];
 
-      let query = `SELECT * FROM ${TABLE_NAME.MAILING_SYSTEM_ACCOUNT} WHERE mailing_system_id = ?`;
+      let query = `SELECT * FROM ${TABLE_NAME.EXTERNAL_SYSTEM_ACCOUNT} WHERE external_system_id = ?`;
 
       if (unit) {
         query += ' AND unit = ?';
