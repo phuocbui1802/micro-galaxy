@@ -131,11 +131,6 @@ module.exports = {
         res.writeHead(err.status || 500);
         res.end('Server error ');
       }
-    },
-
-    // Serve assets from "public" folder
-    assets: {
-      folder: 'public'
     }
   },
 
