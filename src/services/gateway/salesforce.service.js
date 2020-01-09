@@ -338,7 +338,7 @@ module.exports = {
     async getAccessTokenWithCredentials () {
       let jsonConfig;
 
-      if (process.env === 'production') {
+      if (process.env.NODE_ENV === 'production') {
         const response = await this.getConfigByName(SALESFORCE_CONFIG_NAME);
         jsonConfig = response.json_config;
       } else {
