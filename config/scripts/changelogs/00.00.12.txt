@@ -1,0 +1,2 @@
+180614
+- Added inxmail_list table to store inxmail_list

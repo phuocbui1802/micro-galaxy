@@ -1,0 +1,3 @@
+180613
+- Remove foreign key on email and import;
+- change blacklist_data -> complaint_data;

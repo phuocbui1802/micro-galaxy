@@ -1,0 +1,2 @@
+180613
+- Add column widerspruch
