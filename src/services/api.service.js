@@ -1,6 +1,5 @@
 'use strict';
 
-require('dotenv').config();
 const multiparty = require('multiparty');
 const ApiGateway = require('moleculer-web/index.js');
 
