@@ -75,7 +75,7 @@ module.exports = {
     },
 
     async getInvoiceByNumber (number) {
-      const token = this.getAccessToken();
+      const token = await this.getAccessToken();
 
       if (token) {
         const requestConfig = {
