@@ -105,7 +105,7 @@ module.exports = {
         'PUT sales/currency/:currency_id': 'gateway_salesforce.handleUpdateCurrency',
         'POST sales/bulk/sendout': 'gateway_salesforce.handleCreateBulkSendoutUpdateJob',
         'POST sales/bulk/opportunity': 'gateway_salesforce.handleCreateBulkOpportunityUpdateJob',
-        'POST sales/bulk/:jobId' (req, res) {
+        'PUT sales/bulk/:jobId' (req, res) {
           this.handleUploadFile(req, res, 'gateway_salesforce.handleUploadBulkUpdateJob');
         },
         'PATCH sales/bulk/:jobId': 'gateway_salesforce.handleCloseBulkUpdateJob',
@@ -125,10 +125,14 @@ module.exports = {
         res.end(JSON.stringify({
           client_message: err.message
         }));
+      } else if (err.code === 404) {
+        res.setHeader('Content-Type', 'text/plain');
+        res.writeHead(404);
+        res.end('Not found');
       } else {
         res.setHeader('Content-Type', 'text/plain');
-        res.writeHead(err.status || 500);
-        res.end('Server error ');
+        res.writeHead(err.status || err.code || 500);
+        res.end('Server error');
       }
     }
   },
