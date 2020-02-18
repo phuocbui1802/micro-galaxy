@@ -323,7 +323,7 @@ module.exports = {
       const userExists = await this.checkUserExists(listId, body.email, sessionId);
 
       if (userExists) {
-        this.logger.verbose('User already exists on Beyond', body.email);
+        this.logger.debug('User already exists on Beyond', body.email);
         return USER_IMPORT_STATUS.DUPLICATED;
       }
 
