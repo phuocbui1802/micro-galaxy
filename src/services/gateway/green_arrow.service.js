@@ -13,7 +13,10 @@ const END_POINTS = {
   GET_LIST_CAMPAIGNS: 'v2/mailing_lists/{mailingId}/campaigns',
   GET_SINGLE_CAMPAIGN: 'v2/campaigns/{campaignId}',
   GET_USERS_BY_EMAIL: 'v2/subscribers_by_email/:email:',
-  ADD_USER_TO_BLACKLIST: 'v2/suppression_lists/:suppression_list_id:/suppressed_addresses/create_multiple'
+  ADD_USER_TO_BLACKLIST: 'v2/suppression_lists/:suppression_list_id:/suppressed_addresses/create_multiple',
+  CREATE_CAMPAIGN: 'v2/mailing_lists/:mailing_list_id:/campaigns',
+  GET_SEED_LIST: 'v2/seed_lists',
+  GET_VIRTUAL_MTAS: 'v2/virtual_mtas'
 };
 
 const SUPPRESSION_LIST_ID = '2';
@@ -60,6 +63,14 @@ module.exports = {
         system: ctx.params.system,
         country: ctx.params.country,
         status: response
+      };
+    },
+
+    async handleCreateANewCampaign ({ params }) {
+      const response = await this.createANewCampaign(params);
+      return {
+        message: 'OK',
+        response
       };
     },
 
@@ -141,6 +152,25 @@ module.exports = {
           zip: email.zip || ''
         }
       };
+    },
+
+    async createANewCampaign (params) {
+      const { mailingId, campaign } = params;
+      this.logger.info('Creating campaign to mailing: ', mailingId);
+      const url = END_POINTS.CREATE_CAMPAIGN.replace(':mailing_list_id:', mailingId);
+      const { data: campaignRes } = await axiosInstance({
+        method: 'POST',
+        headers: await this.getDefaultHeader(),
+        url: url,
+        data: {
+          campaign
+        }
+      });
+
+      if (!campaignRes.success) {
+        throw new Error(campaignRes.error_message);
+      }
+      return true;
     },
 
     async pushEmailsToGreenArrow (listId, body, overwriteData) {
