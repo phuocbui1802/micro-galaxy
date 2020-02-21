@@ -66,8 +66,9 @@ module.exports = {
       };
     },
 
-    async handleCreateANewCampaign ({ params }) {
-      const response = await this.createANewCampaign(params);
+    async handleCreateANewCampaign (ctx) {
+      const { mailingId, campaign } = ctx.params;
+      const response = await this.createANewCampaign(mailingId, campaign);
       return {
         message: 'OK',
         response
@@ -154,8 +155,7 @@ module.exports = {
       };
     },
 
-    async createANewCampaign (params) {
-      const { mailingId, campaign } = params;
+    async createANewCampaign (mailingId, campaign) {
       this.logger.info('Creating campaign to mailing: ', mailingId);
       const url = END_POINTS.CREATE_CAMPAIGN.replace(':mailing_list_id:', mailingId);
       const { data: campaignRes } = await axiosInstance({
