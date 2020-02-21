@@ -16,8 +16,9 @@ module.exports = {
       mappingPolicy: 'restrict',
       aliases: {
         'POST green-arrow/lead': 'gateway_green_arrow.handleAddEmailToList',
-        'PUT green-arrow/unsub/:email': 'gateway_green_arrow.handleUnsubEmail',
+        'POST green-arrow/mailings/:mailingId/campaigns': 'gateway_green_arrow.handleCreateANewCampaign',
         'POST green-arrow/blacklist/:email': 'gateway_green_arrow.handleAddBlacklistEmail',
+        'PUT green-arrow/unsub/:email': 'gateway_green_arrow.handleUnsubEmail',
         'GET green-arrow/mailings': 'gateway_green_arrow.handleGetListMailings',
         'GET green-arrow/mailings/:mailingId/campaigns': 'gateway_green_arrow.handleGetListCampaignsByMailingId',
         'GET green-arrow/campaigns/:campaignId': 'gateway_green_arrow.handleGetASingleCampaign',
