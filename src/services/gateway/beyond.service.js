@@ -70,12 +70,12 @@ module.exports = {
 
     async handleGetBeyondUser (ctx) {
       const unit = ctx.params.unit || 'default';
-      const response = await this.getUserByEmail(ctx.params.email_address, unit);
+      const recipients = await this.getUserByEmail(ctx.params.email_address, unit);
 
       return {
-        total: response.data.recipients.length,
+        total: recipients.length,
         message: STATUS.OK,
-        recipients: response.data.recipients
+        recipients
       };
     },
 
@@ -258,19 +258,36 @@ module.exports = {
       return errors;
     },
 
-    async getUserByEmail (email, unit) {
-      this.logger.info('Getting: ', email, ' from beyond');
-      const url = `${process.env.BEYOND_HOST}${ENDPOINTS.GET_USER}`;
-      const sessionId = await this.getValidBeyondCredential(unit);
+    async getDataSources (sessionId) {
+      const dataSourceUrl = `${process.env.BEYOND_HOST}${ENDPOINTS.GET_DATASOURCE}`;
+      const { data } = await axios.post(dataSourceUrl, { session_id: sessionId });
+      return data.datasources;
+    },
 
-      return axios({
-        method: 'post',
-        url: url,
-        data: {
+    async getUserByEmail (email, unit) {
+      const sessionId = await this.getValidBeyondCredential(unit);
+      const dataSources = await this.getDataSources(sessionId);
+      const getUserUrl = `${process.env.BEYOND_HOST}${ENDPOINTS.GET_USER}`;
+      let recipients = [];
+
+      for (const dataSource of dataSources) {
+        const { data: recipientData } = await axios.post(getUserUrl, {
           session_id: sessionId,
-          emails: [email]
+          emails: [email],
+          source_id: dataSource.source_id,
+          allow_duplicates: true
+        });
+
+        if (recipientData.recipients.length) {
+          const temp = recipientData.recipients.map(recipient => {
+            recipient.source_id = dataSource.source_id;
+            return recipient;
+          });
+          recipients = recipients.concat(temp);
         }
-      });
+      }
+
+      return recipients;
     },
 
     createEmailObject (email) {
@@ -349,45 +366,55 @@ module.exports = {
 
     async unsubscribeEmail (email, unit) {
       const sessionId = await this.getValidBeyondCredential(unit);
-      const url = `${process.env.BEYOND_HOST}${ENDPOINTS.ADD_SINGLE_EMAIL}`;
 
-      const { data } = await axios({
-        method: 'POST',
-        url: `${process.env.BEYOND_HOST}${ENDPOINTS.GET_DATASOURCE}`,
-        data: {
-          session_id: sessionId
-        }
-      });
+      const dataSources = await this.getDataSources(sessionId);
+      let errors = [];
 
-      const errors = [];
+      for (const dataSource of dataSources) {
+        const getUserUrl = `${process.env.BEYOND_HOST}${ENDPOINTS.GET_USER}`;
 
-      for (const source of data.datasources) {
-        try {
-          const dateUnJoin = moment().format('YYYY-MM-DD HH:mm:ss');
-          const { data } = await axios({
-            method: 'POST',
-            url,
-            data: {
-              session_id: sessionId,
-              recipients: [{ email, dateunjoin: dateUnJoin }],
-              source_id: source.source_id,
-              return_ids: 1
-            }
-          });
-          if (data.status === STATUS.ERROR) {
-            data.sourceId = source.source_id;
-            errors.push(data);
-          }
-        } catch (e) {
-          this.logger.error('Error unsubscribeEmail: ', e);
-          errors.push({
-            status: 'ERR',
-            msg: e.message,
-            sourceId: source.source_id
-          });
+        const { data: recipientData } = await axios.post(getUserUrl, {
+          session_id: sessionId,
+          emails: [email],
+          source_id: dataSource.source_id,
+          allow_duplicates: true
+        });
+
+        if (recipientData.recipients.length) {
+          const results = await this.unsubscribeFollowListRecipients(recipientData.recipients, dataSource, sessionId);
+          errors = errors.concat(results);
         }
       }
+      return errors;
+    },
 
+    async unsubscribeFollowListRecipients (recipients, dataSource, sessionId) {
+      const errors = [];
+      const unsubUrl = `${process.env.BEYOND_HOST}${ENDPOINTS.ADD_SINGLE_EMAIL}`;
+      const dateUnJoin = moment().format('YYYY-MM-DD HH:mm:ss');
+      try {
+        recipients = recipients.map(recipient => {
+          recipient.dateunjoin = dateUnJoin;
+          return recipient;
+        });
+        const { data } = await axios.post(unsubUrl, {
+          session_id: sessionId,
+          recipients: recipients,
+          source_id: dataSource.source_id,
+          return_ids: 1
+        });
+        if (data.status === STATUS.ERROR) {
+          data.sourceId = dataSource.source_id;
+          errors.push(data);
+        }
+      } catch (e) {
+        this.logger.error('Error unsubscribeEmail: ', e);
+        errors.push({
+          status: 'ERR',
+          msg: e.message,
+          sourceId: dataSource.source_id
+        });
+      }
       return errors;
     }
   },
