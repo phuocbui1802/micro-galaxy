@@ -43,6 +43,7 @@ const CONST_CONFIG = {
   },
   SYSTEMS: {
     BEYOND: 'beyond',
+    BEYOND_WEB: 'beyondweb',
     KAJOMI: 'kajomi',
     CLEVER_PUSH: 'cleverpush',
     DOCTOR_SENDER: 'doctorsender',
