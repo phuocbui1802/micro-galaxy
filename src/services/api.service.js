@@ -33,6 +33,10 @@ module.exports = {
         'GET beyond/reports': 'gateway_beyond.handleGetBeyondReports',
         'GET beyond/users/:email_address': 'gateway_beyond.handleGetBeyondUser',
         'GET beyond/campaigns/:campaignId/message': 'gateway_beyond.handleGetBeyondCampaignById',
+        'POST beyond/campaigns': 'gateway_beyond.handleCreateCampaign',
+        'PUT beyond/campaigns/:id': 'gateway_beyond.handleUpdateCampaign',
+        'GET beyond/domains': 'gateway_beyond.handleGetDomains',
+        'GET beyond/segments': 'gateway_beyond.handleGetSegments',
 
         'GET cleverpush/channels': 'gateway_cleverpush.handleGetListChannels',
         'GET cleverpush/channels/:channelId/notifications': 'gateway_cleverpush.handleGetListNotifications',
