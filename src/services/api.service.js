@@ -29,6 +29,7 @@ module.exports = {
 
         'POST beyond/lead': 'gateway_beyond.handleAddEmailToList',
         'POST beyond/blacklist': 'gateway_beyond.handleAddEmailToBlacklist',
+        'POST beyond/blacklist/domain': 'gateway_beyond.handleAddDomainToBlacklist',
         'PUT beyond/unsubscribe/:email': 'gateway_beyond.handleUnsubscribeEmail',
         'GET beyond/reports': 'gateway_beyond.handleGetBeyondReports',
         'GET beyond/users/:email_address': 'gateway_beyond.handleGetBeyondUser',

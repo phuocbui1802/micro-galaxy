@@ -36,7 +36,8 @@ const WEB_ENDPOINTS = {
   GET_CAMPAIGNS: 'https://em6.beyondrm.com/campaigns',
   EDIT_CAMPAIGN: 'https://em6.beyondrm.com/editcampaign2?campagne_id=',
   ACTIVE_CAMPAIGN: 'https://em6.beyondrm.com/sendcampaign?campagne_id=',
-  SEND_TEST_CAMPAIGN: 'https://em6.beyondrm.com/textboxtest?campagne_id='
+  SEND_TEST_CAMPAIGN: 'https://em6.beyondrm.com/textboxtest?campagne_id=',
+  ADD_DOMAIN_TO_BLACKLIST: 'https://em6.beyondrm.com/domainblacklist'
 };
 
 const STATUS = {
@@ -135,6 +136,15 @@ module.exports = {
       if (errors.length > 0) {
         throw new Error(JSON.stringify(errors));
       }
+
+      return {
+        message: STATUS.OK
+      };
+    },
+
+    async handleAddDomainToBlacklist (ctx) {
+      const { domain } = ctx.params;
+      await this.addDomainToBlacklist(domain);
 
       return {
         message: STATUS.OK
@@ -326,6 +336,14 @@ module.exports = {
         }
       }
       return errors;
+    },
+
+    async addDomainToBlacklist (domain) {
+      browser = browser || await this.initBrowser();
+      const page = await browser.newPage();
+      await page.goto(WEB_ENDPOINTS.HOME);
+      await this.loginToWeb(page);
+      await this.addDomain(page, domain);
     },
 
     async getDataSources (sessionId) {
@@ -540,7 +558,7 @@ module.exports = {
 
     async selectDataSource (page, sourceId) {
       await page.goto(WEB_ENDPOINTS.SELECT_SOURCE);
-      await page.waitForSelector(`#member_table_select`);
+      await page.waitForSelector('#member_table_select');
       await page.select('#member_table_select', sourceId);
 
       await page.waitForSelector('#member_table_select');
@@ -592,6 +610,15 @@ module.exports = {
       await page.goto(WEB_ENDPOINTS.ACTIVE_CAMPAIGN + campaignId);
       await page.waitForSelector('input[name="sendbutton"]');
       await page.click('input[name="sendbutton"]');
+    },
+
+    async addDomain (page, domain) {
+      await page.goto(WEB_ENDPOINTS.ADD_DOMAIN_TO_BLACKLIST);
+      await page.waitForSelector('form[action="insertDomainBlacklist"]');
+      await page.type('input[name="domain"]', domain);
+      const submitAddDomain = 'input[name="ADD"]';
+      await page.waitForSelector(submitAddDomain);
+      await page.click(submitAddDomain);
     },
 
     async sendBeyondCampaign (
