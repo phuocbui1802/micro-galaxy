@@ -341,9 +341,16 @@ module.exports = {
     async addDomainToBlacklist (domain) {
       browser = browser || await this.initBrowser();
       const page = await browser.newPage();
-      await page.goto(WEB_ENDPOINTS.HOME);
-      await this.loginToWeb(page);
-      await this.addDomain(page, domain);
+
+      try {
+        await page.goto(WEB_ENDPOINTS.HOME);
+        await this.loginToWeb(page);
+        await this.addDomain(page, `@${domain}`);
+        await page.close();
+      } catch (err) {
+        await page.close();
+        throw err;
+      }
     },
 
     async getDataSources (sessionId) {
